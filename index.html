@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OmniSuite</title>
+    <title>OmniSuite - Inteligentny Konwerter Dokumentów</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -14,76 +14,104 @@
     
     <style>
         body { font-family: 'Inter', sans-serif; }
+        
+        /* Płynne, nieliniowe animacje wejścia */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .animate-delay-100 { animation-delay: 100ms; }
+        .animate-delay-200 { animation-delay: 200ms; }
+        
+        .floating-icon {
+            animation: float 4s ease-in-out infinite;
+        }
     </style>
 </head>
-<body class="bg-white text-slate-900 antialiased min-h-screen flex flex-col">
+<body class="bg-white text-slate-900 antialiased min-h-screen flex flex-col overflow-x-hidden">
 
     <nav class="max-w-7xl mx-auto w-full px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between border-b border-gray-100 gap-4">
-        <div class="flex items-center space-x-2 cursor-pointer" onclick="switchTab('converter')">
-            <span class="text-2xl">📄</span>
-            <span class="font-bold text-xl text-slate-800">Omni<span class="text-orange-500">Suite</span></span>
+        <div class="flex items-center space-x-2 cursor-pointer transition-transform duration-200 active:scale-95" onclick="switchTab('converter')">
+            <span class="text-2xl">⚡</span>
+            <span class="font-bold text-xl text-slate-800 tracking-tight">Omni<span class="text-orange-500">Suite</span></span>
         </div>
         
         <div class="hidden md:flex items-center space-x-6 text-sm font-medium text-gray-600">
-            <button id="navGenerator" onclick="switchTab('converter')" class="hover:text-gray-900 transition cursor-pointer">Generator PDF</button>
-            <button id="navCodespace" onclick="switchTab('codespace')" class="hover:text-gray-900 transition cursor-pointer">CodeSpace</button>
-            <a href="https://github.com/ewewerban/OmniSuite.github.io" target="_blank" class="hover:text-gray-900 transition">GitHub</a>
+            <button id="navGenerator" onclick="switchTab('converter')" class="hover:text-gray-900 transition-colors cursor-pointer relative after:absolute after:bottom-[-18px] after:left-0 after:w-full after:h-[2px] after:bg-orange-500 after:scale-x-0 hover:after:scale-x-100 after:transition-transform">Generator PDF</button>
+            <button id="navCodespace" onclick="switchTab('codespace')" class="hover:text-gray-900 transition-colors cursor-pointer relative after:absolute after:bottom-[-18px] after:left-0 after:w-full after:h-[2px] after:bg-orange-500 after:scale-x-0 hover:after:scale-x-100 after:transition-transform">CodeSpace</button>
+            <a href="https://github.com/ewewerban/OmniSuite.github.io" target="_blank" class="hover:text-gray-900 transition-colors">GitHub</a>
         </div>
 
         <div class="flex items-center space-x-3 ml-auto md:ml-0">
-            <div id="loginBtnContainer">
+            <div id="loginBtnContainer" class="transition-transform hover:scale-105 active:scale-95">
                 <button id="loginBtn" onclick="initiateRealLogin()" class="bg-orange-50 text-orange-600 text-xs font-semibold px-4 py-2 rounded-full border border-orange-200 hover:bg-orange-100 transition cursor-pointer whitespace-nowrap">
                     Zaloguj przez Google
                 </button>
             </div>
-            <button id="logoutBtn" onclick="handleLogout()" class="hidden bg-gray-50 text-gray-600 text-xs font-semibold px-4 py-2 rounded-full border border-gray-200 hover:bg-gray-100 transition cursor-pointer whitespace-nowrap">
+            <button id="logoutBtn" onclick="handleLogout()" class="hidden bg-gray-50 text-gray-600 text-xs font-semibold px-4 py-2 rounded-full border border-gray-200 hover:bg-gray-100 transition-all cursor-pointer whitespace-nowrap hover:shadow-sm">
                 Wyloguj
             </button>
-            <div id="userAvatar" class="hidden w-8 h-8 sm:w-9 h-9 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
+            <div id="userAvatar" class="hidden w-8 h-8 sm:w-9 h-9 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-sm shadow-md shrink-0 transition-transform hover:rotate-12">
                 U
             </div>
         </div>
     </nav>
 
-    <main class="max-w-5xl mx-auto w-full px-4 sm:px-6 pt-12 pb-16 flex-grow text-center">
-        <span class="inline-block bg-orange-50 text-orange-600 text-xs font-semibold px-4 py-1.5 rounded-full mb-6">
-            Convert PDF to Google Form - free AI converter
+    <main class="max-w-5xl mx-auto w-full px-4 sm:px-6 pt-16 pb-16 flex-grow text-center">
+        <span class="inline-block bg-orange-50 text-orange-600 text-xs font-semibold px-4 py-1.5 rounded-full mb-6 animate-fade-in-up opacity-0">
+            Convert PDF to Google Form — free AI converter
         </span>
 
-        <h1 id="mainTitle" class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight mb-6 leading-tight max-w-3xl mx-auto">
+        <h1 id="mainTitle" class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight mb-6 leading-tight max-w-4xl mx-auto animate-fade-in-up animate-delay-100 opacity-0">
             Konwertuj dowolny plik PDF <br> do <br>
-            <span class="text-orange-500">Google Form</span> w kilka sekund
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-600">Google Form</span> w kilka sekund
         </h1>
 
-        <p id="mainDesc" class="text-gray-500 text-sm sm:text-base md:text-lg max-w-2xl mx-auto mb-8 px-2 leading-relaxed">
-            Prześlij plik PDF, wklej dokument Word lub opisz to, czego potrzebujesz. Utwórz dokument bezpośrednio na Twoim Dysku Google za pomocą oficjalnego API.
+        <p id="mainDesc" class="text-gray-500 text-sm sm:text-base md:text-lg max-w-2xl mx-auto mb-10 px-2 leading-relaxed animate-fade-in-up animate-delay-200 opacity-0">
+            Prześlij plik PDF, wklej dokument Word lub opisz to, czego potrzebujesz. Sztuczna inteligencja wyciągnie pytania i utworzy natywny formularz bezpośrednio na Twoim Dysku Google.
         </p>
 
-        <div class="flex flex-wrap items-center justify-center gap-2 text-xs text-gray-400 mb-8">
-            <div class="flex items-center space-x-1.5">
+        <div class="flex flex-wrap items-center justify-center gap-2 text-xs text-gray-400 mb-10 animate-fade-in-up animate-delay-200 opacity-0">
+            <div class="flex items-center space-x-1.5 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
                 <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
-                <span id="backupStatus">Chmura aktywna</span>
+                <span id="backupStatus" class="font-medium text-gray-600">Chmura aktywna</span>
             </div>
-            <button id="btnBackupNow" onclick="triggerBackup()" class="text-orange-600 font-semibold hover:underline cursor-pointer">| Zapisz kopie teraz 💾</button>
+            <button id="btnBackupNow" onclick="triggerBackup()" class="text-orange-600 font-semibold hover:text-orange-700 transition-colors cursor-pointer ml-1">| Zapisz kopię teraz 💾</button>
         </div>
 
-        <div class="bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden max-w-4xl mx-auto text-left">
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden max-w-4xl mx-auto text-left animate-fade-in-up animate-delay-200 opacity-0 transition-all duration-300 hover:shadow-orange-500/5">
             <div class="flex border-b border-gray-200 bg-gray-50/50">
-                <button id="tabBtnConverter" onclick="switchTab('converter')" class="flex-1 py-4 text-xs sm:text-sm font-semibold text-orange-600 border-b-2 border-orange-500 bg-white flex items-center justify-center space-x-2 cursor-pointer transition">
+                <button id="tabBtnConverter" onclick="switchTab('converter')" class="flex-1 py-4 text-xs sm:text-sm font-semibold text-orange-600 border-b-2 border-orange-500 bg-white flex items-center justify-center space-x-2 cursor-pointer transition-all duration-200">
                     <span>🗄️</span> <span id="tabUploadTxt">Upload Document</span>
                 </button>
-                <button id="tabBtnCodespace" onclick="switchTab('codespace')" class="flex-1 py-4 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 flex items-center justify-center space-x-2 cursor-pointer transition">
+                <button id="tabBtnCodespace" onclick="switchTab('codespace')" class="flex-1 py-4 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 flex items-center justify-center space-x-2 cursor-pointer transition-all duration-200">
                     <span>💻</span> <span>CodeSpace Workspace</span>
                 </button>
             </div>
 
-            <div id="contentConverter" class="p-4 sm:p-8 md:p-12">
-                <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 sm:p-14 bg-gray-50/30 flex flex-col items-center justify-center group hover:border-orange-500/40 transition cursor-pointer" onclick="triggerFileInput()">
+            <div id="contentConverter" class="p-4 sm:p-8 md:p-12 transition-all duration-300">
+                <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 sm:p-16 bg-gray-50/30 flex flex-col items-center justify-center group hover:border-orange-500/40 hover:bg-orange-50/10 transition-all duration-300 cursor-pointer" onclick="triggerFileInput()">
                     <input type="file" id="fileInput" class="hidden" onchange="handleFileSelect(event)">
-                    <div class="w-14 h-14 bg-white rounded-2xl shadow-md flex items-center justify-center text-2xl mb-4 group-hover:scale-105 transition border border-gray-100">
+                    <div class="w-16 h-16 bg-white rounded-2xl shadow-md flex items-center justify-center text-3xl mb-5 group-hover:scale-110 transition-transform duration-300 border border-gray-100 floating-icon">
                         ☁️
                     </div>
-                    <p id="uploadText" class="text-xs sm:text-sm font-medium text-gray-700 mb-1 text-center">
+                    <p id="uploadText" class="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 text-center group-hover:text-orange-600 transition-colors">
                         Przeciągnij i upuść plik PDF, Word lub tekstowy
                     </p>
                     <p id="uploadSubtext" class="text-[11px] sm:text-xs text-gray-400 text-center">
@@ -91,26 +119,26 @@
                     </p>
                 </div>
                 
-                <div id="processingBox" class="hidden mt-4 p-4 bg-orange-50 border border-orange-100 rounded-xl flex items-center space-x-3">
+                <div id="processingBox" class="hidden mt-4 p-4 bg-orange-50 border border-orange-100 rounded-xl flex items-center space-x-3 transition-all duration-300 animate-pulse">
                     <span id="procIcon" class="text-xl animate-spin">⚙️</span>
                     <div>
                         <p id="procTitle" class="text-xs sm:text-sm font-semibold text-orange-800">Przetwarzanie dokumentu...</p>
-                        <p id="procDesc" class="text-[11px] sm:text-xs text-orange-600">Trwa wysyłanie metadanych bezpośrednio na Twój Dysk Google przez API.</p>
+                        <p id="procDesc" class="text-[11px] sm:text-xs text-orange-600">Trwa bezpieczna integracja danych z Twoim Dysku Google za pośrednictwem OmniSuite.</p>
                     </div>
                 </div>
             </div>
 
-            <div id="contentCodespace" class="hidden p-3 sm:p-6">
+            <div id="contentCodespace" class="hidden p-3 sm:p-6 transition-all duration-300">
                 <div class="flex flex-col lg:grid lg:grid-cols-2 gap-4 h-[550px] lg:h-[450px]">
-                    <div class="flex flex-col h-[250px] lg:h-full border border-gray-200 rounded-xl overflow-hidden">
+                    <div class="flex flex-col h-[250px] lg:h-full border border-gray-200 rounded-xl overflow-hidden shadow-inner">
                         <div class="bg-gray-800 text-gray-300 px-4 py-2 text-xs font-mono flex justify-between items-center shrink-0">
                             <span>EDYTOR KODU HTML</span>
-                            <span class="text-orange-400">index.html</span>
+                            <span class="text-orange-400">workspace.html</span>
                         </div>
-                        <textarea id="htmlEditor" oninput="updatePreview()" class="w-full flex-grow p-3 font-mono text-xs sm:text-sm bg-gray-900 text-gray-100 focus:outline-none resize-none" placeholder="Wpisz kod..."></textarea>
+                        <textarea id="htmlEditor" oninput="updatePreview()" class="w-full flex-grow p-3 font-mono text-xs sm:text-sm bg-gray-900 text-gray-100 focus:outline-none resize-none transition-all" placeholder="Wpisz kod..."></textarea>
                     </div>
 
-                    <div class="flex flex-col h-[250px] lg:h-full border border-gray-200 rounded-xl overflow-hidden">
+                    <div class="flex flex-col h-[250px] lg:h-full border border-gray-200 rounded-xl overflow-hidden shadow-md">
                         <div class="bg-gray-100 text-gray-600 px-4 py-2 text-xs font-semibold shrink-0">
                             LIVE PREVIEW (PODGLĄD NA ŻYWO)
                         </div>
@@ -121,8 +149,8 @@
         </div>
     </main>
 
-    <footer class="border-t border-gray-100 py-6 text-center text-[11px] sm:text-xs text-gray-400 px-4">
-        &copy; 2026 Doc2Form Open Source Clone. Wszystkie prawa zastrzeżone.
+    <footer class="border-t border-gray-100 py-6 text-center text-[11px] sm:text-xs text-gray-400 px-4 mt-auto">
+        &copy; 2026 OmniSuite Open Source Platform. Wszystkie prawa zastrzeżone.
     </footer>
 
     <script>
@@ -131,9 +159,9 @@
         let userAccessToken = null;
         let tokenClient = null;
 
-        const defaultCode = `<div style="font-family: sans-serif; text-align: center; padding: 30px 15px; background: #fff7ed; border-radius: 12px; border: 2px solid #f97316;">
-    <h1 style="color: #ea580c; margin-bottom: 8px; font-size: 20px;">Witaj w CodeSpace! 🚀</h1>
-    <p style="color: #334155; font-size: 13px;">Zmień ten tekst w edytorze, podgląd odświeży się sam w czasie rzeczywistym.</p>
+        const defaultCode = `<div style="font-family: sans-serif; text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-radius: 16px; border: 2px dashed #f97316; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+    <h1 style="color: #ea580c; margin-bottom: 10px; font-size: 24px; font-weight: bold;">Witaj w OmniSuite! 🚀</h1>
+    <p style="color: #475569; font-size: 14px; max-w: 320px; margin: 0 auto; line-height: 1.5;">Edytuj ten szablon na żywo, struktura formularza odświeży się automatycznie.</p>
 </div>`;
 
         window.onload = function() {
@@ -141,20 +169,20 @@
             updatePreview();
             
             if(window.google) {
-                // 1. Inicjalizacja uwierzytelniania podstawowego typu Identity (ID Token)
+                // 1. Inicjalizacja uwierzytelniania podstawowego Identity (ID Token)
                 google.accounts.id.initialize({
                     client_id: GOOGLE_CLIENT_ID,
                     callback: handleCredentialResponse,
                     auto_select: true
                 });
 
-                // Renderowanie oficjalnego, natywnego przycisku Google wewnątrz kontenera nawigacji
+                // Renderowanie oficjalnego, natywnego przycisku Google z zachowaniem stylistyki pigułki
                 google.accounts.id.renderButton(
                     document.getElementById("loginBtnContainer"),
                     { theme: "outline", size: "small", text: "signin_with", shape: "pill" }
                 );
 
-                // 2. Inicjalizacja klienta tokenów dostępu OAuth2 (potrzebnego do zapisu na Google Drive)
+                // 2. Inicjalizacja klienta tokenów dostępu OAuth2 (Google Drive API)
                 tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: GOOGLE_CLIENT_ID,
                     scope: 'https://www.googleapis.com/auth/drive.file',
@@ -163,7 +191,6 @@
                             userAccessToken = response.access_token;
                             localStorage.setItem('omnisuite_token', userAccessToken);
                             
-                            // Pobieramy dane profilowe za pomocą świeżo autoryzowanego tokenu dostępu
                             fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${userAccessToken}`)
                                 .then(res => res.json())
                                 .then(userData => {
@@ -174,7 +201,7 @@
                     },
                 });
 
-                // 3. PERSYSTENCJA SESJI: Sprawdzamy lokalną pamięć podręczną po odświeżeniu
+                // 3. PERSYSTENCJA SESJI: Automatyczne przywracanie stanu po odświeżeniu
                 const savedUser = localStorage.getItem('omnisuite_user');
                 const savedToken = localStorage.getItem('omnisuite_token');
                 
@@ -182,20 +209,17 @@
                     userAccessToken = savedToken;
                     handleLanguageAndUI(JSON.parse(savedUser));
                 } else {
-                    // Jeśli brak tokenu w localStorage, wywołaj nienachalny auto-prompt Google
                     google.accounts.id.prompt();
                 }
             }
         };
 
-        // Rezerwowa funkcja uruchamiająca jawne pobranie tokenu dostępu po kliknięciu
         function initiateRealLogin() {
             if (tokenClient) {
                 tokenClient.requestAccessToken({ prompt: 'consent' });
             }
         }
 
-        // Przechwycenie odpowiedzi z mechanizmu logowania Google One Tap / Przycisk natywny
         function handleCredentialResponse(response) {
             const base64Url = response.credential.split('.')[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -206,7 +230,6 @@
             const userData = JSON.parse(jsonPayload);
             localStorage.setItem('omnisuite_user', JSON.stringify(userData));
             
-            // Po uwierzytelnieniu tożsamości, automatycznie prosimy o token dostępu do plików dysku (scope: drive.file)
             if (tokenClient) {
                 tokenClient.requestAccessToken({ prompt: '' });
             }
@@ -240,12 +263,10 @@
             document.getElementById('userAvatar').classList.add('hidden');
             document.getElementById('backupStatus').innerText = currentLang === "en" ? "Cloud active" : "Chmura aktywna";
             
-            // Wylogowanie sesji z mechanizmu Google GSI
             google.accounts.id.disableAutoSelect();
-            alert(currentLang === "en" ? "Logged out safely." : "Wylogowano pomyślnie.");
+            alert(currentLang === "en" ? "Logged out safely from OmniSuite." : "Wylogowano pomyślnie z OmniSuite.");
         }
 
-        // WYŚLIJ PLIK DO GOOGLE DRIVE za pomocą przydzielonego Access Tokena
         function uploadToGoogleDrive(fileName, fileContent) {
             if (!userAccessToken) {
                 alert(currentLang === "en" ? "Please sign in to Google first!" : "Najpierw musisz się zalogować przez Google!");
@@ -270,7 +291,7 @@
                 body: form
             })
             .then(response => {
-                if (response.status === 401) { // Wygaśnięcie tokenu sesyjnego
+                if (response.status === 401) {
                     throw new Error("Unauthorized");
                 }
                 return response.json();
@@ -295,14 +316,15 @@
 
         function showUploadSuccess(name) {
             const processingBox = document.getElementById('processingBox');
-            document.getElementById('procIcon').className = "text-xl";
+            processingBox.classList.remove('animate-pulse');
+            document.getElementById('procIcon').className = "text-xl transition-transform duration-500 scale-125";
             document.getElementById('procIcon').innerText = "✅";
             
             if(currentLang === "en") {
-                document.getElementById('procTitle').innerText = "Success! Saved to Google Drive!";
+                document.getElementById('procTitle').innerText = "Success! Saved via OmniSuite!";
                 document.getElementById('procDesc').innerText = `File "${name}" has been successfully created in your Google Cloud Storage.`;
             } else {
-                document.getElementById('procTitle').innerText = "Sukces! Zapisano na Dysku Google!";
+                document.getElementById('procTitle').innerText = "Sukces! Zapisano przez OmniSuite!";
                 document.getElementById('procDesc').innerText = `Plik "${name}" został pomyślnie utworzony w Twojej chmurze Google.`;
             }
         }
@@ -313,12 +335,13 @@
                 document.getElementById('uploadText').innerText = (currentLang === "en" ? "Selected file: " : "Wybrany dokument: ") + file.name;
                 const processingBox = document.getElementById('processingBox');
                 processingBox.classList.remove('hidden');
+                processingBox.classList.add('animate-pulse');
                 document.getElementById('procIcon').className = "text-xl animate-spin";
                 document.getElementById('procIcon').innerText = "⚙️";
 
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    uploadToGoogleDrive("Doc2Form_" + file.name + ".txt", e.target.result || "Pusta zawartość konwersji OmniSuite");
+                    uploadToGoogleDrive("OmniSuite_" + file.name + ".txt", e.target.result || "Pusta zawartość konwersji OmniSuite");
                 };
                 reader.readAsText(file);
             }
@@ -333,7 +356,7 @@
             const statusText = document.getElementById('backupStatus');
             statusText.innerText = currentLang === "en" ? "Uploading workspace backup..." : "Wysyłanie kopii zapasowej...";
             
-            uploadToGoogleDrive("CodeSpace_Backup.html", currentCode);
+            uploadToGoogleDrive("OmniSuite_Backup.html", currentCode);
         }
 
         function setLanguage(lang, email = "") {
@@ -341,26 +364,26 @@
             if(lang === "en") {
                 document.getElementById('navGenerator').innerText = "PDF Generator";
                 document.getElementById('navCodespace').innerText = "CodeSpace";
-                document.getElementById('mainTitle').innerHTML = `Convert any PDF <br> to a <br> <span class="text-orange-500">Google Form</span> in seconds`;
-                document.getElementById('mainDesc').innerText = "Upload a PDF, Word document or text. Gemini AI will automatically generate a dynamic questionnaire directly onto your Google Drive account.";
+                document.getElementById('mainTitle').innerHTML = `Convert any PDF or document <br> to a <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-600">Google Form</span> in seconds`;
+                document.getElementById('mainDesc').innerText = "Upload a PDF (even scanned), paste a Word doc, or describe what you need. OmniSuite extracts questions, detects field types, and creates a native Google Form directly in your Google Drive — no copy-paste.";
                 document.getElementById('btnBackupNow').innerText = "| Save copies now 💾";
                 document.getElementById('tabUploadTxt').innerText = "Upload Document";
                 document.getElementById('uploadText').innerText = "Drag and drop PDF, Word or text file here";
                 document.getElementById('uploadSubtext').innerText = "or click to select file from device";
-                document.getElementById('procTitle').innerText = "Gemini AI is processing your file...";
-                document.getElementById('procDesc').innerText = "Converting fields and generating your native Google Form.";
+                document.getElementById('procTitle').innerText = "OmniSuite Core is processing your file...";
+                document.getElementById('procDesc').innerText = "Converting fields and generating your native Google Form layout.";
                 document.getElementById('backupStatus').innerText = email ? "Connected: " + email : "Cloud active";
             } else {
                 document.getElementById('navGenerator').innerText = "Generator PDF";
                 document.getElementById('navCodespace').innerText = "CodeSpace";
-                document.getElementById('mainTitle').innerHTML = `Konwertuj dowolny plik PDF <br> do <br> <span class="text-orange-500">Google Form</span> w kilka sekund`;
-                document.getElementById('mainDesc').innerText = "Prześlij plik PDF, wklej dokument Word lub opisz to, czego potrzebujesz. Sztuczna inteligencja Gemini wyciągnie pytania i utworzy natywny formularz bezpośrednio na Twoim Dysku Google.";
-                document.getElementById('btnBackupNow').innerText = "| Zapisz kopie teraz 💾";
+                document.getElementById('mainTitle').innerHTML = `Konwertuj dowolny plik PDF <br> do <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-600">Google Form</span> w kilka sekund`;
+                document.getElementById('mainDesc').innerText = "Prześlij plik PDF, wklej dokument Word lub opisz to, czego potrzebujesz. Sztuczna inteligencja wyciągnie pytania i utworzy natywny formularz bezpośrednio na Twoim Dysku Google.";
+                document.getElementById('btnBackupNow').innerText = "| Zapisz kopię teraz 💾";
                 document.getElementById('tabUploadTxt').innerText = "Upload Document";
                 document.getElementById('uploadText').innerText = "Przeciągnij i upuść plik PDF, Word lub tekstowy";
                 document.getElementById('uploadSubtext').innerText = "lub kliknij, aby wybrać dokument z tego urządzenia";
-                document.getElementById('procTitle').innerText = "Sztuczna inteligencja Gemini przetwarza plik...";
-                document.getElementById('procDesc').innerText = "Trwa konwersja i generowanie pól w Twoim Google Form.";
+                document.getElementById('procTitle').innerText = "Sztuczna inteligencja przetwarza plik...";
+                document.getElementById('procDesc').innerText = "Trwa konwersja i bezpieczna integracja z Twoim kontem Google Form za pośrednictwem OmniSuite.";
                 document.getElementById('backupStatus').innerText = email ? "Połączono: " + email : "Chmura aktywna";
             }
         }
@@ -372,13 +395,13 @@
             const contentCodespace = document.getElementById('contentCodespace');
 
             if (tabName === 'converter') {
-                btnConverter.className = "flex-1 py-4 text-xs sm:text-sm font-semibold text-orange-600 border-b-2 border-orange-500 bg-white flex items-center justify-center space-x-2 cursor-pointer transition";
-                btnCodespace.className = "flex-1 py-4 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 flex items-center justify-center space-x-2 cursor-pointer transition";
+                btnConverter.className = "flex-1 py-4 text-xs sm:text-sm font-semibold text-orange-600 border-b-2 border-orange-500 bg-white flex items-center justify-center space-x-2 cursor-pointer transition-all";
+                btnCodespace.className = "flex-1 py-4 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 flex items-center justify-center space-x-2 cursor-pointer transition-all";
                 contentConverter.classList.remove('hidden');
                 contentCodespace.classList.add('hidden');
             } else {
-                btnCodespace.className = "flex-1 py-4 text-xs sm:text-sm font-semibold text-orange-600 border-b-2 border-orange-500 bg-white flex items-center justify-center space-x-2 cursor-pointer transition";
-                btnConverter.className = "flex-1 py-4 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 flex items-center justify-center space-x-2 cursor-pointer transition";
+                btnCodespace.className = "flex-1 py-4 text-xs sm:text-sm font-semibold text-orange-600 border-b-2 border-orange-500 bg-white flex items-center justify-center space-x-2 cursor-pointer transition-all";
+                btnConverter.className = "flex-1 py-4 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 flex items-center justify-center space-x-2 cursor-pointer transition-all";
                 contentCodespace.classList.remove('hidden');
                 contentConverter.classList.add('hidden');
                 updatePreview();
