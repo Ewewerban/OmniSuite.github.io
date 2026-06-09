@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OmniSuite - Inteligentny Konwerter Dokumentów</title>
+    <title>OmniSuite</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -131,15 +131,20 @@
             <div id="contentCodespace" class="hidden p-3 sm:p-6 transition-all duration-300">
                 <div class="flex flex-col lg:grid lg:grid-cols-2 gap-4 h-[550px] lg:h-[450px]">
                     <div class="flex flex-col h-[250px] lg:h-full border border-gray-200 rounded-xl overflow-hidden shadow-inner">
-                        <div class="bg-gray-800 text-gray-300 px-4 py-2 text-xs font-mono flex justify-between items-center shrink-0">
-                            <span>EDYTOR KODU HTML</span>
-                            <span class="text-orange-400">workspace.html</span>
+                        <div class="bg-gray-800 text-gray-300 px-4 py-1.5 text-xs font-mono flex justify-between items-center shrink-0">
+                            <div class="flex items-center space-x-2">
+                                <span>EDYTOR KODU HTML</span>
+                                <span class="text-orange-400">workspace.html</span>
+                            </div>
+                            <button onclick="downloadCodeFile()" class="bg-orange-500 hover:bg-orange-600 text-white font-sans text-[11px] font-bold px-2.5 py-1 rounded transition-all active:scale-95 flex items-center space-x-1 cursor-pointer shadow-sm">
+                                <span>📥</span> <span id="lblDownloadBtn">Pobierz plik HTML</span>
+                            </button>
                         </div>
                         <textarea id="htmlEditor" oninput="updatePreview()" class="w-full flex-grow p-3 font-mono text-xs sm:text-sm bg-gray-900 text-gray-100 focus:outline-none resize-none transition-all" placeholder="Wpisz kod..."></textarea>
                     </div>
 
                     <div class="flex flex-col h-[250px] lg:h-full border border-gray-200 rounded-xl overflow-hidden shadow-md">
-                        <div class="bg-gray-100 text-gray-600 px-4 py-2 text-xs font-semibold shrink-0">
+                        <div class="bg-gray-100 text-gray-600 px-4 py-2.5 text-xs font-semibold shrink-0">
                             LIVE PREVIEW (PODGLĄD NA ŻYWO)
                         </div>
                         <iframe id="livePreview" class="w-full flex-grow bg-white" srcdoc=""></iframe>
@@ -169,20 +174,17 @@
             updatePreview();
             
             if(window.google) {
-                // 1. Inicjalizacja uwierzytelniania podstawowego Identity (ID Token)
                 google.accounts.id.initialize({
                     client_id: GOOGLE_CLIENT_ID,
                     callback: handleCredentialResponse,
                     auto_select: true
                 });
 
-                // Renderowanie oficjalnego, natywnego przycisku Google z zachowaniem stylistyki pigułki
                 google.accounts.id.renderButton(
                     document.getElementById("loginBtnContainer"),
                     { theme: "outline", size: "small", text: "signin_with", shape: "pill" }
                 );
 
-                // 2. Inicjalizacja klienta tokenów dostępu OAuth2 (Google Drive API)
                 tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: GOOGLE_CLIENT_ID,
                     scope: 'https://www.googleapis.com/auth/drive.file',
@@ -201,7 +203,6 @@
                     },
                 });
 
-                // 3. PERSYSTENCJA SESJI: Automatyczne przywracanie stanu po odświeżeniu
                 const savedUser = localStorage.getItem('omnisuite_user');
                 const savedToken = localStorage.getItem('omnisuite_token');
                 
@@ -213,6 +214,26 @@
                 }
             }
         };
+
+        /* FUNKCJA LOKALNEGO POBIERANIA PLIKU HTML */
+        function downloadCodeFile() {
+            const codeContent = document.getElementById('htmlEditor').value;
+            if (!codeContent.trim()) {
+                alert(currentLang === "en" ? "Editor is empty!" : "Edytor jest pusty!");
+                return;
+            }
+            
+            const blob = new Blob([codeContent], { type: 'text/html;charset=utf-8;' });
+            const link = document.createElement("a");
+            
+            link.href = URL.createObjectURL(blob);
+            link.download = "omnisuite_workspace.html";
+            link.style.display = "none";
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
 
         function initiateRealLogin() {
             if (tokenClient) {
@@ -373,6 +394,7 @@
                 document.getElementById('procTitle').innerText = "OmniSuite Core is processing your file...";
                 document.getElementById('procDesc').innerText = "Converting fields and generating your native Google Form layout.";
                 document.getElementById('backupStatus').innerText = email ? "Connected: " + email : "Cloud active";
+                document.getElementById('lblDownloadBtn').innerText = "Download HTML file";
             } else {
                 document.getElementById('navGenerator').innerText = "Generator PDF";
                 document.getElementById('navCodespace').innerText = "CodeSpace";
@@ -385,6 +407,7 @@
                 document.getElementById('procTitle').innerText = "Sztuczna inteligencja przetwarza plik...";
                 document.getElementById('procDesc').innerText = "Trwa konwersja i bezpieczna integracja z Twoim kontem Google Form za pośrednictwem OmniSuite.";
                 document.getElementById('backupStatus').innerText = email ? "Połączono: " + email : "Chmura aktywna";
+                document.getElementById('lblDownloadBtn').innerText = "Pobierz plik HTML";
             }
         }
 
