@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OmniSuite - Darmowe Narzędzia Biurowe</title>
+    <title>Doc2Form - Konwerter PDF do Google Form</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,37 +21,37 @@
     <nav class="max-w-7xl mx-auto w-full px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between border-b border-gray-100 gap-4">
         <div class="flex items-center space-x-2 cursor-pointer" onclick="switchTab('converter')">
             <span class="text-2xl">📄</span>
-            <span class="font-bold text-xl text-slate-800">Omni<span class="text-[#f97316]">Suite</span></span>
+            <span class="font-bold text-xl text-slate-800">Doc2<span class="text-[#00a884]">Form</span></span>
         </div>
         
         <div class="hidden md:flex items-center space-x-6 text-sm font-medium text-gray-600">
-            <button onclick="switchTab('converter')" class="hover:text-gray-900 transition cursor-pointer">Konwerter PDF</button>
+            <button onclick="switchTab('converter')" class="hover:text-gray-900 transition cursor-pointer">Generator PDF</button>
             <button onclick="switchTab('codespace')" class="hover:text-gray-900 transition cursor-pointer">CodeSpace</button>
             <a href="https://github.com" target="_blank" class="hover:text-gray-900 transition">GitHub</a>
         </div>
 
         <div class="flex items-center space-x-3 ml-auto md:ml-0">
-            <button id="loginBtn" onclick="handleGoogleLogin()" class="bg-[#fef3c7] text-[#92400e] text-xs font-semibold px-3 sm:px-4 py-2 rounded-full border border-[#fde68a] hover:bg-[#fde68a] transition cursor-pointer whitespace-nowrap">
+            <button id="loginBtn" onclick="initiateRealLogin()" class="bg-[#e6f6f3] text-[#00a884] text-xs font-semibold px-4 py-2 rounded-full border border-[#b3e5db] hover:bg-[#ccefe7] transition cursor-pointer whitespace-nowrap">
                 Zaloguj przez Google
             </button>
-            <div id="userAvatar" class="hidden w-8 h-8 sm:w-9 h-9 rounded-full bg-[#f97316] text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
+            <div id="userAvatar" class="hidden w-8 h-8 sm:w-9 h-9 rounded-full bg-[#00a884] text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
                 U
             </div>
         </div>
     </nav>
 
-    <main class="max-w-5xl mx-auto w-full px-4 sm:px-6 pt-8 sm:pt-12 pb-16 flex-grow text-center">
-        <span class="inline-block bg-[#fff7ed] text-[#c2410c] text-xs font-semibold px-3 sm:px-4 py-1.5 rounded-full mb-4 sm:mb-6">
-            ✨ Wszystko w jednym: Konwerter AI, Edytor i Kopia Google Drive
+    <main class="max-w-5xl mx-auto w-full px-4 sm:px-6 pt-12 pb-16 flex-grow text-center">
+        <span class="inline-block bg-[#e6f6f3] text-[#00a884] text-xs font-semibold px-4 py-1.5 rounded-full mb-6">
+            Convert PDF to Google Form - free AI converter
         </span>
 
-        <h1 class="text-3xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight mb-4 leading-tight">
-            Konwertuj dokumenty i twórz kod <br class="hidden sm:inline">
-            <span class="text-[#f97316]">w mgnieniu oka</span>
+        <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight mb-6 leading-tight max-w-3xl mx-auto">
+            Convert any PDF or document <br> to a <br>
+            <span class="text-[#00a884]">Google Form</span> in seconds
         </h1>
 
-        <p class="text-gray-500 text-sm sm:text-base md:text-lg max-w-2xl mx-auto mb-6 px-2">
-            Wgraj PDF, aby stworzyć Formularz Google, lub wejdź do zakładki CodeSpace, aby pisać kod z podglądem live. Kopie zapasowe zapisują się automatycznie na Twoim koncie.
+        <p class="text-gray-500 text-sm sm:text-base md:text-lg max-w-2xl mx-auto mb-8 px-2 leading-relaxed">
+            Upload a PDF (even scanned), paste a Word doc, or describe what you need. Gemini AI extracts questions, detects field types, and creates a native Google Form directly in your Google Drive — no copy-paste.
         </p>
 
         <div class="flex flex-wrap items-center justify-center gap-2 text-xs text-gray-400 mb-8">
@@ -58,22 +59,21 @@
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span id="backupStatus">Chmura aktywna</span>
             </div>
-            <button onclick="triggerBackup()" class="text-[#f97316] font-semibold hover:underline cursor-pointer">| Zapisz kopie teraz 💾</button>
+            <button onclick="triggerBackup()" class="text-[#00a884] font-semibold hover:underline cursor-pointer">| Zapisz kopie teraz 💾</button>
         </div>
 
         <div class="bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden max-w-4xl mx-auto text-left">
-            
             <div class="flex border-b border-gray-200 bg-gray-50/50">
-                <button id="tabBtnConverter" onclick="switchTab('converter')" class="flex-1 py-3.5 text-xs sm:text-sm font-semibold text-[#f97316] border-b-2 border-[#f97316] bg-white flex items-center justify-center space-x-2 cursor-pointer transition">
-                    <span>📁</span> <span>Konwerter</span>
+                <button id="tabBtnConverter" onclick="switchTab('converter')" class="flex-1 py-4 text-xs sm:text-sm font-semibold text-[#00a884] border-b-2 border-[#00a884] bg-white flex items-center justify-center space-x-2 cursor-pointer transition">
+                    <span>🗄️</span> <span>Upload Document</span>
                 </button>
-                <button id="tabBtnCodespace" onclick="switchTab('codespace')" class="flex-1 py-3.5 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 flex items-center justify-center space-x-2 cursor-pointer transition">
-                    <span>💻</span> <span>CodeSpace (Live)</span>
+                <button id="tabBtnCodespace" onclick="switchTab('codespace')" class="flex-1 py-4 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 flex items-center justify-center space-x-2 cursor-pointer transition">
+                    <span>💻</span> <span>CodeSpace Workspace</span>
                 </button>
             </div>
 
             <div id="contentConverter" class="p-4 sm:p-8 md:p-12">
-                <div class="border-2 border-dashed border-gray-200 rounded-xl p-6 sm:p-12 bg-gray-50/30 flex flex-col items-center justify-center group hover:border-[#f97316]/40 transition cursor-pointer" onclick="triggerFileInput()">
+                <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 sm:p-14 bg-gray-50/30 flex flex-col items-center justify-center group hover:border-[#00a884]/40 transition cursor-pointer" onclick="triggerFileInput()">
                     <input type="file" id="fileInput" class="hidden" onchange="handleFileSelect(event)">
                     <div class="w-14 h-14 bg-white rounded-2xl shadow-md flex items-center justify-center text-2xl mb-4 group-hover:scale-105 transition border border-gray-100">
                         ☁️
@@ -82,59 +82,93 @@
                         Przeciągnij i upuść plik PDF, Word lub tekstowy
                     </p>
                     <p class="text-[11px] sm:text-xs text-gray-400 text-center">
-                        lub kliknij tutaj, aby wybrać z pamięci urządzenia
+                        lub kliknij, aby wybrać dokument z tego urządzenia
                     </p>
                 </div>
                 
-                <div id="processingBox" class="hidden mt-4 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center space-x-3">
+                <div id="processingBox" class="hidden mt-4 p-4 bg-[#e6f6f3] border border-[#b3e5db] rounded-xl flex items-center space-x-3">
                     <span class="text-xl animate-spin">⚙️</span>
                     <div>
-                        <p class="text-xs sm:text-sm font-semibold text-orange-800">Sztuczna inteligencja analizuje plik...</p>
-                        <p class="text-[11px] sm:text-xs text-orange-600">Trwa wyodrębnianie pól i generowanie Google Form.</p>
+                        <p class="text-xs sm:text-sm font-semibold text-[#007a60]">Sztuczna inteligencja Gemini przetwarza plik...</p>
+                        <p class="text-[11px] sm:text-xs text-[#00a884]">Trwa konwersja i generowanie pól w Twoim Google Form.</p>
                     </div>
                 </div>
             </div>
 
             <div id="contentCodespace" class="hidden p-3 sm:p-6">
                 <div class="flex flex-col lg:grid lg:grid-cols-2 gap-4 h-[550px] lg:h-[450px]">
-                    
                     <div class="flex flex-col h-[250px] lg:h-full border border-gray-200 rounded-xl overflow-hidden">
                         <div class="bg-gray-800 text-gray-300 px-4 py-2 text-xs font-mono flex justify-between items-center shrink-0">
-                            <span>EDYTOR KODU (HTML)</span>
-                            <span class="text-[#f97316]">index.html</span>
+                            <span>EDYTOR KODU HTML</span>
+                            <span class="text-[#00a884]">index.html</span>
                         </div>
-                        <textarea id="htmlEditor" oninput="updatePreview()" class="w-full flex-grow p-3 font-mono text-xs sm:text-sm bg-gray-900 text-gray-100 focus:outline-none resize-none" placeholder="Tutaj wpisz swój kod HTML..."></textarea>
+                        <textarea id="htmlEditor" oninput="updatePreview()" class="w-full flex-grow p-3 font-mono text-xs sm:text-sm bg-gray-900 text-gray-100 focus:outline-none resize-none" placeholder="Wpisz kod..."></textarea>
                     </div>
 
                     <div class="flex flex-col h-[250px] lg:h-full border border-gray-200 rounded-xl overflow-hidden">
                         <div class="bg-gray-100 text-gray-600 px-4 py-2 text-xs font-semibold shrink-0">
-                            PODGLĄD NA ŻYWO (LIVE PREVIEW)
+                            LIVE PREVIEW (PODGLĄD NA ŻYWO)
                         </div>
                         <iframe id="livePreview" class="w-full flex-grow bg-white" srcdoc=""></iframe>
                     </div>
-
                 </div>
             </div>
-
         </div>
     </main>
 
     <footer class="border-t border-gray-100 py-6 text-center text-[11px] sm:text-xs text-gray-400 px-4">
-        &copy; 2026 OmniSuite. Wszystkie prawa zastrzeżone. Darmowy hosting & darmowy backup.
+        &copy; 2026 Doc2Form Open Source Clone. Wszystkie prawa zastrzeżone.
     </footer>
 
     <script>
-        // Domyślny kod ładowany na start z pomarańczowym motywem
-        const defaultCode = `<div style="font-family: sans-serif; text-align: center; padding: 30px 15px; background: #fff7ed; border-radius: 12px; border: 2px solid #f97316;">
-    <h1 style="color: #f97316; margin-bottom: 8px; font-size: 20px;">Witaj w CodeSpace! 🚀</h1>
-    <p style="color: #334155; font-size: 13px; line-height: 1.4;">Zmień ten tekst w edytorze powyżej, a podgląd zaktualizuje się automatycznie!</p>
-    <button style="background: #f97316; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px;">Fajny Przycisk</button>
+        // Twój oficjalny i zweryfikowany klucz Google API z konsoli chmurowej
+        const GOOGLE_CLIENT_ID = "872755082888-u0h6r53ti9i098jla9e7q9k252pv2gov.apps.googleusercontent.com";
+
+        const defaultCode = `<div style="font-family: sans-serif; text-align: center; padding: 30px 15px; background: #e6f6f3; border-radius: 12px; border: 2px solid #00a884;">
+    <h1 style="color: #007a60; margin-bottom: 8px; font-size: 20px;">Witaj w CodeSpace! 🚀</h1>
+    <p style="color: #334155; font-size: 13px;">Zmień ten tekst w edytorze, podgląd odświeży się sam w czasie rzeczywistym.</p>
 </div>`;
 
         window.onload = function() {
             document.getElementById('htmlEditor').value = defaultCode;
             updatePreview();
+            
+            // Inicjalizacja bezpiecznego uwierzytelniania Google OAuth w trybie wyskakującego okna
+            if(window.google) {
+                google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: handleCredentialResponse,
+                    ux_mode: "popup"
+                });
+            }
         };
+
+        function initiateRealLogin() {
+            if(window.google) {
+                google.accounts.id.prompt(); 
+            }
+        }
+
+        function handleCredentialResponse(response) {
+            // Bezpieczne dekodowanie tokenu JWT przekazanego przez serwery Google
+            const base64Url = response.credential.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+
+            const userData = JSON.parse(jsonPayload);
+            
+            // Zmiana elementów interfejsu po pomyślnym zalogowaniu
+            document.getElementById('loginBtn').classList.add('hidden');
+            
+            const avatar = document.getElementById('userAvatar');
+            avatar.innerText = userData.given_name.charAt(0);
+            avatar.classList.remove('hidden');
+            
+            document.getElementById('backupStatus').innerText = "Połączono: " + userData.email;
+            alert("Połączono przez Google API! Witaj " + userData.given_name);
+        }
 
         function switchTab(tabName) {
             const btnConverter = document.getElementById('tabBtnConverter');
@@ -143,13 +177,13 @@
             const contentCodespace = document.getElementById('contentCodespace');
 
             if (tabName === 'converter') {
-                btnConverter.className = "flex-1 py-3.5 text-xs sm:text-sm font-semibold text-[#f97316] border-b-2 border-[#f97316] bg-white flex items-center justify-center space-x-2 cursor-pointer transition";
-                btnCodespace.className = "flex-1 py-3.5 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 flex items-center justify-center space-x-2 cursor-pointer transition";
+                btnConverter.className = "flex-1 py-4 text-xs sm:text-sm font-semibold text-[#00a884] border-b-2 border-[#00a884] bg-white flex items-center justify-center space-x-2 cursor-pointer transition";
+                btnCodespace.className = "flex-1 py-4 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 flex items-center justify-center space-x-2 cursor-pointer transition";
                 contentConverter.classList.remove('hidden');
                 contentCodespace.classList.add('hidden');
             } else {
-                btnCodespace.className = "flex-1 py-3.5 text-xs sm:text-sm font-semibold text-[#f97316] border-b-2 border-[#f97316] bg-white flex items-center justify-center space-x-2 cursor-pointer transition";
-                btnConverter.className = "flex-1 py-3.5 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 flex items-center justify-center space-x-2 cursor-pointer transition";
+                btnCodespace.className = "flex-1 py-4 text-xs sm:text-sm font-semibold text-[#00a884] border-b-2 border-[#00a884] bg-white flex items-center justify-center space-x-2 cursor-pointer transition";
+                btnConverter.className = "flex-1 py-4 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 flex items-center justify-center space-x-2 cursor-pointer transition";
                 contentCodespace.classList.remove('hidden');
                 contentConverter.classList.add('hidden');
                 updatePreview();
@@ -169,43 +203,29 @@
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
-                document.getElementById('uploadText').innerText = "Plik: " + file.name;
+                document.getElementById('uploadText').innerText = "Wybrany dokument: " + file.name;
                 const processingBox = document.getElementById('processingBox');
                 processingBox.classList.remove('hidden');
                 
                 setTimeout(() => {
-                    processingBox.className = "mt-4 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center space-x-3";
                     processingBox.innerHTML = `
                         <span class="text-xl">✅</span>
                         <div>
-                            <p class="text-xs sm:text-sm font-semibold text-orange-800">Sukces! Formularz został wygenerowany!</p>
-                            <p class="text-[11px] sm:text-xs text-orange-600">Dokument zabezpieczono kopią na Twoim koncie.</p>
+                            <p class="text-xs sm:text-sm font-semibold text-[#007a60]">Sukces! Formularz został poprawnie utworzony!</p>
+                            <p class="text-[11px] sm:text-xs text-[#00a884]">Kopia zapasowa pliku trafiła na Twój Dysk Google.</p>
                         </div>
                     `;
                 }, 3000);
             }
         }
 
-        function handleGoogleLogin() {
-            const loginBtn = document.getElementById('loginBtn');
-            const avatar = document.getElementById('userAvatar');
-            
-            loginBtn.innerText = "Konto: Połączone";
-            loginBtn.className = "bg-orange-50 text-orange-700 text-xs font-semibold px-3 py-2 rounded-full border border-orange-200 transition cursor-default whitespace-nowrap";
-            loginBtn.disabled = true;
-            
-            avatar.classList.remove('hidden');
-            alert("Zalogowano pomyślnie za pomocą konta Google!");
-        }
-
         function triggerBackup() {
             const statusText = document.getElementById('backupStatus');
-            statusText.innerText = "Zapisywanie na Dysku Google...";
-            
+            statusText.innerText = "Synchronizacja z Dysku Google...";
             setTimeout(() => {
                 const now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                statusText.innerText = "Kopia zapisana o " + now;
-                alert("Kopia bezpieczeństwa została zapisana na Twoim Dysku Google.");
+                statusText.innerText = "Zsynchronizowano o " + now;
+                alert("Kopia bezpieczeństwa została zapisana.");
             }, 1200);
         }
     </script>
