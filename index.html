@@ -27,12 +27,15 @@
         <div class="hidden md:flex items-center space-x-6 text-sm font-medium text-gray-600">
             <button id="navGenerator" onclick="switchTab('converter')" class="hover:text-gray-900 transition cursor-pointer">Generator PDF</button>
             <button id="navCodespace" onclick="switchTab('codespace')" class="hover:text-gray-900 transition cursor-pointer">CodeSpace</button>
-            <a href="https://github.com" target="_blank" class="hover:text-gray-900 transition">GitHub</a>
+            <a href="https://github.com/ewewerban/OmniSuite.github.io" target="_blank" class="hover:text-gray-900 transition">GitHub</a>
         </div>
 
         <div class="flex items-center space-x-3 ml-auto md:ml-0">
             <button id="loginBtn" onclick="initiateRealLogin()" class="bg-orange-50 text-orange-600 text-xs font-semibold px-4 py-2 rounded-full border border-orange-200 hover:bg-orange-100 transition cursor-pointer whitespace-nowrap">
                 Zaloguj przez Google
+            </button>
+            <button id="logoutBtn" onclick="handleLogout()" class="hidden bg-gray-50 text-gray-600 text-xs font-semibold px-4 py-2 rounded-full border border-gray-200 hover:bg-gray-100 transition cursor-pointer whitespace-nowrap">
+                Wyloguj
             </button>
             <div id="userAvatar" class="hidden w-8 h-8 sm:w-9 h-9 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
                 U
@@ -51,7 +54,7 @@
         </h1>
 
         <p id="mainDesc" class="text-gray-500 text-sm sm:text-base md:text-lg max-w-2xl mx-auto mb-8 px-2 leading-relaxed">
-            Prześlij plik PDF, wklej dokument Word lub opisz to, czego potrzebujesz. Sztuczna inteligencja Gemini wyciągnie pytania i utworzy natywny formularz bezpośrednio na Twoim Dysku Google.
+            Prześlij plik PDF, wklej dokument Word lub opisz to, czego potrzebujesz. Utwórz dokument bezpośrednio na Twoim Dysku Google za pomocą oficjalnego API.
         </p>
 
         <div class="flex flex-wrap items-center justify-center gap-2 text-xs text-gray-400 mb-8">
@@ -87,10 +90,10 @@
                 </div>
                 
                 <div id="processingBox" class="hidden mt-4 p-4 bg-orange-50 border border-orange-100 rounded-xl flex items-center space-x-3">
-                    <span class="text-xl animate-spin">⚙️</span>
+                    <span id="procIcon" class="text-xl animate-spin">⚙️</span>
                     <div>
-                        <p id="procTitle" class="text-xs sm:text-sm font-semibold text-orange-800">Sztuczna inteligencja Gemini przetwarza plik...</p>
-                        <p id="procDesc" class="text-[11px] sm:text-xs text-orange-600">Trwa konwersja i generowanie pól w Twoim Google Form.</p>
+                        <p id="procTitle" class="text-xs sm:text-sm font-semibold text-orange-800">Przetwarzanie dokumentu...</p>
+                        <p id="procDesc" class="text-[11px] sm:text-xs text-orange-600">Trwa wysyłanie metadanych bezpośrednio na Twój Dysk Google przez API.</p>
                     </div>
                 </div>
             </div>
@@ -123,6 +126,7 @@
     <script>
         const GOOGLE_CLIENT_ID = "872755082888-u0h6r53ti9i098jla9e7q9k252pv2gov.apps.googleusercontent.com";
         let currentLang = "pl";
+        let userAccessToken = null;
 
         const defaultCode = `<div style="font-family: sans-serif; text-align: center; padding: 30px 15px; background: #fff7ed; border-radius: 12px; border: 2px solid #f97316;">
     <h1 style="color: #ea580c; margin-bottom: 8px; font-size: 20px;">Witaj w CodeSpace! 🚀</h1>
@@ -134,17 +138,50 @@
             updatePreview();
             
             if(window.google) {
+                // Inicjalizacja logowania z obsługą automatycznego logowania (auto_select)
                 google.accounts.id.initialize({
                     client_id: GOOGLE_CLIENT_ID,
                     callback: handleCredentialResponse,
+                    auto_select: true, 
                     ux_mode: "popup"
                 });
+
+                // Sprawdzamy, czy w pamięci przeglądarki jest zapisany poprzedni użytkownik
+                const savedUser = localStorage.getItem('omnisuite_user');
+                const savedToken = localStorage.getItem('omnisuite_token');
+                
+                if (savedUser && savedToken) {
+                    const userData = JSON.parse(savedUser);
+                    userAccessToken = savedToken;
+                    applyLoggedInUI(userData);
+                } else {
+                    // Jeśli nie ma w pamięci, próbujemy automatycznie wywołać cichy pop-up Google
+                    google.accounts.id.prompt();
+                }
             }
         };
 
         function initiateRealLogin() {
+            // Do zapisu na Dysku Google potrzebujemy Tokenu dostępu (OAuth Access Token) ze scope Drive
             if(window.google) {
-                google.accounts.id.prompt(); 
+                const tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: 'https://www.googleapis.com/auth/drive.file',
+                    callback: (response) => {
+                        if (response.access_token) {
+                            userAccessToken = response.access_token;
+                            localStorage.setItem('omnisuite_token', userAccessToken);
+                            // Pobieramy podstawowe dane profilu za pomocą tokenu
+                            fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${userAccessToken}`)
+                                .then(res => res.json())
+                                .then(userData => {
+                                    localStorage.setItem('omnisuite_user', JSON.stringify(userData));
+                                    handleLanguageAndUI(userData);
+                                });
+                        }
+                    },
+                });
+                tokenClient.requestAccessToken({prompt: 'consent'});
             }
         }
 
@@ -156,18 +193,121 @@
             }).join(''));
 
             const userData = JSON.parse(jsonPayload);
+            localStorage.setItem('omnisuite_user', JSON.stringify(userData));
             
-            document.getElementById('loginBtn').classList.add('hidden');
-            const avatar = document.getElementById('userAvatar');
-            avatar.innerText = userData.given_name.charAt(0);
-            avatar.classList.remove('hidden');
+            // Jeśli logujemy się przez ID Token, prosimy w tle o token dostępu do plików dysku
+            initiateRealLogin();
+        }
 
-            // OBSŁUGA PREFERENCJI JĘZYKOWYCH KONTA GOOGLE
+        function handleLanguageAndUI(userData) {
+            applyLoggedInUI(userData);
             if(userData.locale && userData.locale.startsWith("en")) {
                 setLanguage("en", userData.email, userData.given_name);
             } else {
                 setLanguage("pl", userData.email, userData.given_name);
             }
+        }
+
+        function applyLoggedInUI(userData) {
+            document.getElementById('loginBtn').classList.add('hidden');
+            document.getElementById('logoutBtn').classList.remove('hidden');
+            const avatar = document.getElementById('userAvatar');
+            avatar.innerText = userData.given_name ? userData.given_name.charAt(0) : "U";
+            avatar.classList.remove('hidden');
+            document.getElementById('backupStatus').innerText = (currentLang === "en" ? "Connected: " : "Połączono: ") + userData.email;
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('omnisuite_user');
+            localStorage.removeItem('omnisuite_token');
+            userAccessToken = null;
+            document.getElementById('loginBtn').classList.remove('hidden');
+            document.getElementById('logoutBtn').classList.add('hidden');
+            document.getElementById('userAvatar').classList.add('hidden');
+            document.getElementById('backupStatus').innerText = currentLang === "en" ? "Cloud active" : "Chmura aktywna";
+            alert(currentLang === "en" ? "Logged out safely." : "Wylogowano pomyślnie.");
+        }
+
+        // PRAWDZIWY BACKEND: Funkcja tworząca plik na realnym Dysku Google użytkownika
+        function uploadToGoogleDrive(fileName, fileContent) {
+            if (!userAccessToken) {
+                alert(currentLang === "en" ? "Please sign in to Google first!" : "Najpierw musisz się zalogować przez Google!");
+                return;
+            }
+
+            const metadata = {
+                name: fileName,
+                mimeType: 'text/plain'
+            };
+
+            const form = new FormData();
+            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+            form.append('file', new Blob([fileContent], { type: 'text/plain' }));
+
+            fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + userAccessToken
+                },
+                body: form
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.id) {
+                    showUploadSuccess(fileName);
+                } else {
+                    throw new Error("API Error");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert(currentLang === "en" ? "Failed to save on Google Drive. Re-login might be needed." : "Błąd zapisu na Dysku Google. Spróbuj zalogować się ponownie.");
+            });
+        }
+
+        function showUploadSuccess(name) {
+            const processingBox = document.getElementById('processingBox');
+            document.getElementById('procIcon').className = "text-xl";
+            document.getElementById('procIcon').innerText = "✅";
+            
+            if(currentLang === "en") {
+                document.getElementById('procTitle').innerText = "Success! Saved to Google Drive!";
+                document.getElementById('procDesc').innerText = `File "${name}" has been successfully created in your Google Cloud Storage.`;
+            } else {
+                document.getElementById('procTitle').innerText = "Sukces! Zapisano na Dysku Google!";
+                document.getElementById('procDesc').innerText = `Plik "${name}" został pomyślnie utworzony w Twojej chmurze Google.`;
+            }
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                document.getElementById('uploadText').innerText = (currentLang === "en" ? "Selected file: " : "Wybrany dokument: ") + file.name;
+                const processingBox = document.getElementById('processingBox');
+                processingBox.classList.remove('hidden');
+                document.getElementById('procIcon').className = "text-xl animate-spin";
+                document.getElementById('procIcon').innerText = "⚙️";
+
+                // Wywołujemy prawdziwy upload zawartości pliku tekstowego na Dysk Google
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadToGoogleDrive("Doc2Form_" + file.name + ".txt", e.target.result || "Pusta zawartość konwersji OmniSuite");
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function triggerBackup() {
+            if (!userAccessToken) {
+                initiateRealLogin();
+                return;
+            }
+            const currentCode = document.getElementById('htmlEditor').value;
+            const statusText = document.getElementById('backupStatus');
+            statusText.innerText = currentLang === "en" ? "Uploading workspace backup..." : "Wysyłanie kopii zapasowej...";
+            
+            // Zapisujemy aktualny stan edytora CodeSpace na prawdziwy Dysk Google
+            uploadToGoogleDrive("CodeSpace_Backup.html", currentCode);
         }
 
         function setLanguage(lang, email = "", name = "") {
@@ -184,7 +324,6 @@
                 document.getElementById('procTitle').innerText = "Gemini AI is processing your file...";
                 document.getElementById('procDesc').innerText = "Converting fields and generating your native Google Form.";
                 document.getElementById('backupStatus').innerText = email ? "Connected: " + email : "Cloud active";
-                if(name) alert("Connected via Google API! Welcome " + name);
             } else {
                 document.getElementById('navGenerator').innerText = "Generator PDF";
                 document.getElementById('navCodespace').innerText = "CodeSpace";
@@ -197,7 +336,6 @@
                 document.getElementById('procTitle').innerText = "Sztuczna inteligencja Gemini przetwarza plik...";
                 document.getElementById('procDesc').innerText = "Trwa konwersja i generowanie pól w Twoim Google Form.";
                 document.getElementById('backupStatus').innerText = email ? "Połączono: " + email : "Chmura aktywna";
-                if(name) alert("Połączono przez Google API! Witaj " + name);
             }
         }
 
@@ -229,45 +367,6 @@
 
         function triggerFileInput() {
             document.getElementById('fileInput').click();
-        }
-
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (file) {
-                document.getElementById('uploadText').innerText = (currentLang === "en" ? "Selected file: " : "Wybrany dokument: ") + file.name;
-                const processingBox = document.getElementById('processingBox');
-                processingBox.classList.remove('hidden');
-                
-                setTimeout(() => {
-                    if(currentLang === "en") {
-                        processingBox.innerHTML = `
-                            <span class="text-xl">✅</span>
-                            <div>
-                                <p class="text-xs sm:text-sm font-semibold text-orange-800">Success! Google Form created successfully!</p>
-                                <p class="text-[11px] sm:text-xs text-orange-600">A backup copy has been uploaded to your Google Drive.</p>
-                            </div>
-                        `;
-                    } else {
-                        processingBox.innerHTML = `
-                            <span class="text-xl">✅</span>
-                            <div>
-                                <p class="text-xs sm:text-sm font-semibold text-orange-800">Sukces! Formularz został poprawnie utworzony!</p>
-                                <p class="text-[11px] sm:text-xs text-orange-600">Kopia zapasowa pliku trafiła na Twój Dysk Google.</p>
-                            </div>
-                        `;
-                    }
-                }, 3000);
-            }
-        }
-
-        function triggerBackup() {
-            const statusText = document.getElementById('backupStatus');
-            statusText.innerText = currentLang === "en" ? "Syncing with Google Drive..." : "Synchronizacja z Dysku Google...";
-            setTimeout(() => {
-                const now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                statusText.innerText = (currentLang === "en" ? "Synced at " : "Zsynchronizowano o ") + now;
-                alert(currentLang === "en" ? "Backup saved successfully." : "Kopia bezpieczeństwa została zapisana.");
-            }, 1200);
         }
     </script>
 </body>
