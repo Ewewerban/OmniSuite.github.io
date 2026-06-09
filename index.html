@@ -21,51 +21,51 @@
     <nav class="max-w-7xl mx-auto w-full px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between border-b border-gray-100 gap-4">
         <div class="flex items-center space-x-2 cursor-pointer" onclick="switchTab('converter')">
             <span class="text-2xl">📄</span>
-            <span class="font-bold text-xl text-slate-800">Doc2<span class="text-[#00a884]">Form</span></span>
+            <span class="font-bold text-xl text-slate-800">Doc2<span class="text-orange-500">Form</span></span>
         </div>
         
         <div class="hidden md:flex items-center space-x-6 text-sm font-medium text-gray-600">
-            <button onclick="switchTab('converter')" class="hover:text-gray-900 transition cursor-pointer">Generator PDF</button>
-            <button onclick="switchTab('codespace')" class="hover:text-gray-900 transition cursor-pointer">CodeSpace</button>
+            <button id="navGenerator" onclick="switchTab('converter')" class="hover:text-gray-900 transition cursor-pointer">Generator PDF</button>
+            <button id="navCodespace" onclick="switchTab('codespace')" class="hover:text-gray-900 transition cursor-pointer">CodeSpace</button>
             <a href="https://github.com" target="_blank" class="hover:text-gray-900 transition">GitHub</a>
         </div>
 
         <div class="flex items-center space-x-3 ml-auto md:ml-0">
-            <button id="loginBtn" onclick="initiateRealLogin()" class="bg-[#e6f6f3] text-[#00a884] text-xs font-semibold px-4 py-2 rounded-full border border-[#b3e5db] hover:bg-[#ccefe7] transition cursor-pointer whitespace-nowrap">
+            <button id="loginBtn" onclick="initiateRealLogin()" class="bg-orange-50 text-orange-600 text-xs font-semibold px-4 py-2 rounded-full border border-orange-200 hover:bg-orange-100 transition cursor-pointer whitespace-nowrap">
                 Zaloguj przez Google
             </button>
-            <div id="userAvatar" class="hidden w-8 h-8 sm:w-9 h-9 rounded-full bg-[#00a884] text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
+            <div id="userAvatar" class="hidden w-8 h-8 sm:w-9 h-9 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
                 U
             </div>
         </div>
     </nav>
 
     <main class="max-w-5xl mx-auto w-full px-4 sm:px-6 pt-12 pb-16 flex-grow text-center">
-        <span class="inline-block bg-[#e6f6f3] text-[#00a884] text-xs font-semibold px-4 py-1.5 rounded-full mb-6">
+        <span class="inline-block bg-orange-50 text-orange-600 text-xs font-semibold px-4 py-1.5 rounded-full mb-6">
             Convert PDF to Google Form - free AI converter
         </span>
 
-        <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight mb-6 leading-tight max-w-3xl mx-auto">
-            Convert any PDF or document <br> to a <br>
-            <span class="text-[#00a884]">Google Form</span> in seconds
+        <h1 id="mainTitle" class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight mb-6 leading-tight max-w-3xl mx-auto">
+            Konwertuj dowolny plik PDF <br> do <br>
+            <span class="text-orange-500">Google Form</span> w kilka sekund
         </h1>
 
-        <p class="text-gray-500 text-sm sm:text-base md:text-lg max-w-2xl mx-auto mb-8 px-2 leading-relaxed">
-            Upload a PDF (even scanned), paste a Word doc, or describe what you need. Gemini AI extracts questions, detects field types, and creates a native Google Form directly in your Google Drive — no copy-paste.
+        <p id="mainDesc" class="text-gray-500 text-sm sm:text-base md:text-lg max-w-2xl mx-auto mb-8 px-2 leading-relaxed">
+            Prześlij plik PDF, wklej dokument Word lub opisz to, czego potrzebujesz. Sztuczna inteligencja Gemini wyciągnie pytania i utworzy natywny formularz bezpośrednio na Twoim Dysku Google.
         </p>
 
         <div class="flex flex-wrap items-center justify-center gap-2 text-xs text-gray-400 mb-8">
             <div class="flex items-center space-x-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
                 <span id="backupStatus">Chmura aktywna</span>
             </div>
-            <button onclick="triggerBackup()" class="text-[#00a884] font-semibold hover:underline cursor-pointer">| Zapisz kopie teraz 💾</button>
+            <button id="btnBackupNow" onclick="triggerBackup()" class="text-orange-600 font-semibold hover:underline cursor-pointer">| Zapisz kopie teraz 💾</button>
         </div>
 
         <div class="bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden max-w-4xl mx-auto text-left">
             <div class="flex border-b border-gray-200 bg-gray-50/50">
-                <button id="tabBtnConverter" onclick="switchTab('converter')" class="flex-1 py-4 text-xs sm:text-sm font-semibold text-[#00a884] border-b-2 border-[#00a884] bg-white flex items-center justify-center space-x-2 cursor-pointer transition">
-                    <span>🗄️</span> <span>Upload Document</span>
+                <button id="tabBtnConverter" onclick="switchTab('converter')" class="flex-1 py-4 text-xs sm:text-sm font-semibold text-orange-600 border-b-2 border-orange-500 bg-white flex items-center justify-center space-x-2 cursor-pointer transition">
+                    <span>🗄️</span> <span id="tabUploadTxt">Upload Document</span>
                 </button>
                 <button id="tabBtnCodespace" onclick="switchTab('codespace')" class="flex-1 py-4 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 flex items-center justify-center space-x-2 cursor-pointer transition">
                     <span>💻</span> <span>CodeSpace Workspace</span>
@@ -73,7 +73,7 @@
             </div>
 
             <div id="contentConverter" class="p-4 sm:p-8 md:p-12">
-                <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 sm:p-14 bg-gray-50/30 flex flex-col items-center justify-center group hover:border-[#00a884]/40 transition cursor-pointer" onclick="triggerFileInput()">
+                <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 sm:p-14 bg-gray-50/30 flex flex-col items-center justify-center group hover:border-orange-500/40 transition cursor-pointer" onclick="triggerFileInput()">
                     <input type="file" id="fileInput" class="hidden" onchange="handleFileSelect(event)">
                     <div class="w-14 h-14 bg-white rounded-2xl shadow-md flex items-center justify-center text-2xl mb-4 group-hover:scale-105 transition border border-gray-100">
                         ☁️
@@ -81,16 +81,16 @@
                     <p id="uploadText" class="text-xs sm:text-sm font-medium text-gray-700 mb-1 text-center">
                         Przeciągnij i upuść plik PDF, Word lub tekstowy
                     </p>
-                    <p class="text-[11px] sm:text-xs text-gray-400 text-center">
+                    <p id="uploadSubtext" class="text-[11px] sm:text-xs text-gray-400 text-center">
                         lub kliknij, aby wybrać dokument z tego urządzenia
                     </p>
                 </div>
                 
-                <div id="processingBox" class="hidden mt-4 p-4 bg-[#e6f6f3] border border-[#b3e5db] rounded-xl flex items-center space-x-3">
+                <div id="processingBox" class="hidden mt-4 p-4 bg-orange-50 border border-orange-100 rounded-xl flex items-center space-x-3">
                     <span class="text-xl animate-spin">⚙️</span>
                     <div>
-                        <p class="text-xs sm:text-sm font-semibold text-[#007a60]">Sztuczna inteligencja Gemini przetwarza plik...</p>
-                        <p class="text-[11px] sm:text-xs text-[#00a884]">Trwa konwersja i generowanie pól w Twoim Google Form.</p>
+                        <p id="procTitle" class="text-xs sm:text-sm font-semibold text-orange-800">Sztuczna inteligencja Gemini przetwarza plik...</p>
+                        <p id="procDesc" class="text-[11px] sm:text-xs text-orange-600">Trwa konwersja i generowanie pól w Twoim Google Form.</p>
                     </div>
                 </div>
             </div>
@@ -100,7 +100,7 @@
                     <div class="flex flex-col h-[250px] lg:h-full border border-gray-200 rounded-xl overflow-hidden">
                         <div class="bg-gray-800 text-gray-300 px-4 py-2 text-xs font-mono flex justify-between items-center shrink-0">
                             <span>EDYTOR KODU HTML</span>
-                            <span class="text-[#00a884]">index.html</span>
+                            <span class="text-orange-400">index.html</span>
                         </div>
                         <textarea id="htmlEditor" oninput="updatePreview()" class="w-full flex-grow p-3 font-mono text-xs sm:text-sm bg-gray-900 text-gray-100 focus:outline-none resize-none" placeholder="Wpisz kod..."></textarea>
                     </div>
@@ -121,11 +121,11 @@
     </footer>
 
     <script>
-        // Twój oficjalny i zweryfikowany klucz Google API z konsoli chmurowej
         const GOOGLE_CLIENT_ID = "872755082888-u0h6r53ti9i098jla9e7q9k252pv2gov.apps.googleusercontent.com";
+        let currentLang = "pl";
 
-        const defaultCode = `<div style="font-family: sans-serif; text-align: center; padding: 30px 15px; background: #e6f6f3; border-radius: 12px; border: 2px solid #00a884;">
-    <h1 style="color: #007a60; margin-bottom: 8px; font-size: 20px;">Witaj w CodeSpace! 🚀</h1>
+        const defaultCode = `<div style="font-family: sans-serif; text-align: center; padding: 30px 15px; background: #fff7ed; border-radius: 12px; border: 2px solid #f97316;">
+    <h1 style="color: #ea580c; margin-bottom: 8px; font-size: 20px;">Witaj w CodeSpace! 🚀</h1>
     <p style="color: #334155; font-size: 13px;">Zmień ten tekst w edytorze, podgląd odświeży się sam w czasie rzeczywistym.</p>
 </div>`;
 
@@ -133,7 +133,6 @@
             document.getElementById('htmlEditor').value = defaultCode;
             updatePreview();
             
-            // Inicjalizacja bezpiecznego uwierzytelniania Google OAuth w trybie wyskakującego okna
             if(window.google) {
                 google.accounts.id.initialize({
                     client_id: GOOGLE_CLIENT_ID,
@@ -150,7 +149,6 @@
         }
 
         function handleCredentialResponse(response) {
-            // Bezpieczne dekodowanie tokenu JWT przekazanego przez serwery Google
             const base64Url = response.credential.split('.')[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
             const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
@@ -159,15 +157,48 @@
 
             const userData = JSON.parse(jsonPayload);
             
-            // Zmiana elementów interfejsu po pomyślnym zalogowaniu
             document.getElementById('loginBtn').classList.add('hidden');
-            
             const avatar = document.getElementById('userAvatar');
             avatar.innerText = userData.given_name.charAt(0);
             avatar.classList.remove('hidden');
-            
-            document.getElementById('backupStatus').innerText = "Połączono: " + userData.email;
-            alert("Połączono przez Google API! Witaj " + userData.given_name);
+
+            // OBSŁUGA PREFERENCJI JĘZYKOWYCH KONTA GOOGLE
+            if(userData.locale && userData.locale.startsWith("en")) {
+                setLanguage("en", userData.email, userData.given_name);
+            } else {
+                setLanguage("pl", userData.email, userData.given_name);
+            }
+        }
+
+        function setLanguage(lang, email = "", name = "") {
+            currentLang = lang;
+            if(lang === "en") {
+                document.getElementById('navGenerator').innerText = "PDF Generator";
+                document.getElementById('navCodespace').innerText = "CodeSpace";
+                document.getElementById('mainTitle').innerHTML = `Convert any PDF <br> to a <br> <span class="text-orange-500">Google Form</span> in seconds`;
+                document.getElementById('mainDesc').innerText = "Upload a PDF, Word document or text. Gemini AI will automatically generate a dynamic questionnaire directly onto your Google Drive account.";
+                document.getElementById('btnBackupNow').innerText = "| Save copies now 💾";
+                document.getElementById('tabUploadTxt').innerText = "Upload Document";
+                document.getElementById('uploadText').innerText = "Drag and drop PDF, Word or text file here";
+                document.getElementById('uploadSubtext').innerText = "or click to select file from device";
+                document.getElementById('procTitle').innerText = "Gemini AI is processing your file...";
+                document.getElementById('procDesc').innerText = "Converting fields and generating your native Google Form.";
+                document.getElementById('backupStatus').innerText = email ? "Connected: " + email : "Cloud active";
+                if(name) alert("Connected via Google API! Welcome " + name);
+            } else {
+                document.getElementById('navGenerator').innerText = "Generator PDF";
+                document.getElementById('navCodespace').innerText = "CodeSpace";
+                document.getElementById('mainTitle').innerHTML = `Konwertuj dowolny plik PDF <br> do <br> <span class="text-orange-500">Google Form</span> w kilka sekund`;
+                document.getElementById('mainDesc').innerText = "Prześlij plik PDF, wklej dokument Word lub opisz to, czego potrzebujesz. Sztuczna inteligencja Gemini wyciągnie pytania i utworzy natywny formularz bezpośrednio na Twoim Dysku Google.";
+                document.getElementById('btnBackupNow').innerText = "| Zapisz kopie teraz 💾";
+                document.getElementById('tabUploadTxt').innerText = "Upload Document";
+                document.getElementById('uploadText').innerText = "Przeciągnij i upuść plik PDF, Word lub tekstowy";
+                document.getElementById('uploadSubtext').innerText = "lub kliknij, aby wybrać dokument z tego urządzenia";
+                document.getElementById('procTitle').innerText = "Sztuczna inteligencja Gemini przetwarza plik...";
+                document.getElementById('procDesc').innerText = "Trwa konwersja i generowanie pól w Twoim Google Form.";
+                document.getElementById('backupStatus').innerText = email ? "Połączono: " + email : "Chmura aktywna";
+                if(name) alert("Połączono przez Google API! Witaj " + name);
+            }
         }
 
         function switchTab(tabName) {
@@ -177,12 +208,12 @@
             const contentCodespace = document.getElementById('contentCodespace');
 
             if (tabName === 'converter') {
-                btnConverter.className = "flex-1 py-4 text-xs sm:text-sm font-semibold text-[#00a884] border-b-2 border-[#00a884] bg-white flex items-center justify-center space-x-2 cursor-pointer transition";
+                btnConverter.className = "flex-1 py-4 text-xs sm:text-sm font-semibold text-orange-600 border-b-2 border-orange-500 bg-white flex items-center justify-center space-x-2 cursor-pointer transition";
                 btnCodespace.className = "flex-1 py-4 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 flex items-center justify-center space-x-2 cursor-pointer transition";
                 contentConverter.classList.remove('hidden');
                 contentCodespace.classList.add('hidden');
             } else {
-                btnCodespace.className = "flex-1 py-4 text-xs sm:text-sm font-semibold text-[#00a884] border-b-2 border-[#00a884] bg-white flex items-center justify-center space-x-2 cursor-pointer transition";
+                btnCodespace.className = "flex-1 py-4 text-xs sm:text-sm font-semibold text-orange-600 border-b-2 border-orange-500 bg-white flex items-center justify-center space-x-2 cursor-pointer transition";
                 btnConverter.className = "flex-1 py-4 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 flex items-center justify-center space-x-2 cursor-pointer transition";
                 contentCodespace.classList.remove('hidden');
                 contentConverter.classList.add('hidden');
@@ -203,29 +234,39 @@
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
-                document.getElementById('uploadText').innerText = "Wybrany dokument: " + file.name;
+                document.getElementById('uploadText').innerText = (currentLang === "en" ? "Selected file: " : "Wybrany dokument: ") + file.name;
                 const processingBox = document.getElementById('processingBox');
                 processingBox.classList.remove('hidden');
                 
                 setTimeout(() => {
-                    processingBox.innerHTML = `
-                        <span class="text-xl">✅</span>
-                        <div>
-                            <p class="text-xs sm:text-sm font-semibold text-[#007a60]">Sukces! Formularz został poprawnie utworzony!</p>
-                            <p class="text-[11px] sm:text-xs text-[#00a884]">Kopia zapasowa pliku trafiła na Twój Dysk Google.</p>
-                        </div>
-                    `;
+                    if(currentLang === "en") {
+                        processingBox.innerHTML = `
+                            <span class="text-xl">✅</span>
+                            <div>
+                                <p class="text-xs sm:text-sm font-semibold text-orange-800">Success! Google Form created successfully!</p>
+                                <p class="text-[11px] sm:text-xs text-orange-600">A backup copy has been uploaded to your Google Drive.</p>
+                            </div>
+                        `;
+                    } else {
+                        processingBox.innerHTML = `
+                            <span class="text-xl">✅</span>
+                            <div>
+                                <p class="text-xs sm:text-sm font-semibold text-orange-800">Sukces! Formularz został poprawnie utworzony!</p>
+                                <p class="text-[11px] sm:text-xs text-orange-600">Kopia zapasowa pliku trafiła na Twój Dysk Google.</p>
+                            </div>
+                        `;
+                    }
                 }, 3000);
             }
         }
 
         function triggerBackup() {
             const statusText = document.getElementById('backupStatus');
-            statusText.innerText = "Synchronizacja z Dysku Google...";
+            statusText.innerText = currentLang === "en" ? "Syncing with Google Drive..." : "Synchronizacja z Dysku Google...";
             setTimeout(() => {
                 const now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                statusText.innerText = "Zsynchronizowano o " + now;
-                alert("Kopia bezpieczeństwa została zapisana.");
+                statusText.innerText = (currentLang === "en" ? "Synced at " : "Zsynchronizowano o ") + now;
+                alert(currentLang === "en" ? "Backup saved successfully." : "Kopia bezpieczeństwa została zapisana.");
             }, 1200);
         }
     </script>
