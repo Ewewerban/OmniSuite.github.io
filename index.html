@@ -31,9 +31,11 @@
         </div>
 
         <div class="flex items-center space-x-3 ml-auto md:ml-0">
-            <button id="loginBtn" onclick="initiateRealLogin()" class="bg-orange-50 text-orange-600 text-xs font-semibold px-4 py-2 rounded-full border border-orange-200 hover:bg-orange-100 transition cursor-pointer whitespace-nowrap">
-                Zaloguj przez Google
-            </button>
+            <div id="loginBtnContainer">
+                <button id="loginBtn" onclick="initiateRealLogin()" class="bg-orange-50 text-orange-600 text-xs font-semibold px-4 py-2 rounded-full border border-orange-200 hover:bg-orange-100 transition cursor-pointer whitespace-nowrap">
+                    Zaloguj przez Google
+                </button>
+            </div>
             <button id="logoutBtn" onclick="handleLogout()" class="hidden bg-gray-50 text-gray-600 text-xs font-semibold px-4 py-2 rounded-full border border-gray-200 hover:bg-gray-100 transition cursor-pointer whitespace-nowrap">
                 Wyloguj
             </button>
@@ -127,6 +129,7 @@
         const GOOGLE_CLIENT_ID = "872755082888-u0h6r53ti9i098jla9e7q9k252pv2gov.apps.googleusercontent.com";
         let currentLang = "pl";
         let userAccessToken = null;
+        let tokenClient = null;
 
         const defaultCode = `<div style="font-family: sans-serif; text-align: center; padding: 30px 15px; background: #fff7ed; border-radius: 12px; border: 2px solid #f97316;">
     <h1 style="color: #ea580c; margin-bottom: 8px; font-size: 20px;">Witaj w CodeSpace! 🚀</h1>
@@ -138,40 +141,29 @@
             updatePreview();
             
             if(window.google) {
-                // Inicjalizacja logowania z obsługą automatycznego logowania (auto_select)
+                // 1. Inicjalizacja uwierzytelniania podstawowego typu Identity (ID Token)
                 google.accounts.id.initialize({
                     client_id: GOOGLE_CLIENT_ID,
                     callback: handleCredentialResponse,
-                    auto_select: true, 
-                    ux_mode: "popup"
+                    auto_select: true
                 });
 
-                // Sprawdzamy, czy w pamięci przeglądarki jest zapisany poprzedni użytkownik
-                const savedUser = localStorage.getItem('omnisuite_user');
-                const savedToken = localStorage.getItem('omnisuite_token');
-                
-                if (savedUser && savedToken) {
-                    const userData = JSON.parse(savedUser);
-                    userAccessToken = savedToken;
-                    applyLoggedInUI(userData);
-                } else {
-                    // Jeśli nie ma w pamięci, próbujemy automatycznie wywołać cichy pop-up Google
-                    google.accounts.id.prompt();
-                }
-            }
-        };
+                // Renderowanie oficjalnego, natywnego przycisku Google wewnątrz kontenera nawigacji
+                google.accounts.id.renderButton(
+                    document.getElementById("loginBtnContainer"),
+                    { theme: "outline", size: "small", text: "signin_with", shape: "pill" }
+                );
 
-        function initiateRealLogin() {
-            // Do zapisu na Dysku Google potrzebujemy Tokenu dostępu (OAuth Access Token) ze scope Drive
-            if(window.google) {
-                const tokenClient = google.accounts.oauth2.initTokenClient({
+                // 2. Inicjalizacja klienta tokenów dostępu OAuth2 (potrzebnego do zapisu na Google Drive)
+                tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: GOOGLE_CLIENT_ID,
                     scope: 'https://www.googleapis.com/auth/drive.file',
                     callback: (response) => {
                         if (response.access_token) {
                             userAccessToken = response.access_token;
                             localStorage.setItem('omnisuite_token', userAccessToken);
-                            // Pobieramy podstawowe dane profilu za pomocą tokenu
+                            
+                            // Pobieramy dane profilowe za pomocą świeżo autoryzowanego tokenu dostępu
                             fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${userAccessToken}`)
                                 .then(res => res.json())
                                 .then(userData => {
@@ -181,10 +173,29 @@
                         }
                     },
                 });
-                tokenClient.requestAccessToken({prompt: 'consent'});
+
+                // 3. PERSYSTENCJA SESJI: Sprawdzamy lokalną pamięć podręczną po odświeżeniu
+                const savedUser = localStorage.getItem('omnisuite_user');
+                const savedToken = localStorage.getItem('omnisuite_token');
+                
+                if (savedUser && savedToken) {
+                    userAccessToken = savedToken;
+                    handleLanguageAndUI(JSON.parse(savedUser));
+                } else {
+                    // Jeśli brak tokenu w localStorage, wywołaj nienachalny auto-prompt Google
+                    google.accounts.id.prompt();
+                }
+            }
+        };
+
+        // Rezerwowa funkcja uruchamiająca jawne pobranie tokenu dostępu po kliknięciu
+        function initiateRealLogin() {
+            if (tokenClient) {
+                tokenClient.requestAccessToken({ prompt: 'consent' });
             }
         }
 
+        // Przechwycenie odpowiedzi z mechanizmu logowania Google One Tap / Przycisk natywny
         function handleCredentialResponse(response) {
             const base64Url = response.credential.split('.')[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -195,21 +206,23 @@
             const userData = JSON.parse(jsonPayload);
             localStorage.setItem('omnisuite_user', JSON.stringify(userData));
             
-            // Jeśli logujemy się przez ID Token, prosimy w tle o token dostępu do plików dysku
-            initiateRealLogin();
+            // Po uwierzytelnieniu tożsamości, automatycznie prosimy o token dostępu do plików dysku (scope: drive.file)
+            if (tokenClient) {
+                tokenClient.requestAccessToken({ prompt: '' });
+            }
         }
 
         function handleLanguageAndUI(userData) {
             applyLoggedInUI(userData);
             if(userData.locale && userData.locale.startsWith("en")) {
-                setLanguage("en", userData.email, userData.given_name);
+                setLanguage("en", userData.email);
             } else {
-                setLanguage("pl", userData.email, userData.given_name);
+                setLanguage("pl", userData.email);
             }
         }
 
         function applyLoggedInUI(userData) {
-            document.getElementById('loginBtn').classList.add('hidden');
+            document.getElementById('loginBtnContainer').classList.add('hidden');
             document.getElementById('logoutBtn').classList.remove('hidden');
             const avatar = document.getElementById('userAvatar');
             avatar.innerText = userData.given_name ? userData.given_name.charAt(0) : "U";
@@ -221,17 +234,22 @@
             localStorage.removeItem('omnisuite_user');
             localStorage.removeItem('omnisuite_token');
             userAccessToken = null;
-            document.getElementById('loginBtn').classList.remove('hidden');
+            
+            document.getElementById('loginBtnContainer').classList.remove('hidden');
             document.getElementById('logoutBtn').classList.add('hidden');
             document.getElementById('userAvatar').classList.add('hidden');
             document.getElementById('backupStatus').innerText = currentLang === "en" ? "Cloud active" : "Chmura aktywna";
+            
+            // Wylogowanie sesji z mechanizmu Google GSI
+            google.accounts.id.disableAutoSelect();
             alert(currentLang === "en" ? "Logged out safely." : "Wylogowano pomyślnie.");
         }
 
-        // PRAWDZIWY BACKEND: Funkcja tworząca plik na realnym Dysku Google użytkownika
+        // WYŚLIJ PLIK DO GOOGLE DRIVE za pomocą przydzielonego Access Tokena
         function uploadToGoogleDrive(fileName, fileContent) {
             if (!userAccessToken) {
                 alert(currentLang === "en" ? "Please sign in to Google first!" : "Najpierw musisz się zalogować przez Google!");
+                if (tokenClient) tokenClient.requestAccessToken({ prompt: 'consent' });
                 return;
             }
 
@@ -251,7 +269,12 @@
                 },
                 body: form
             })
-            .then(response => response.json())
+            .then(response => {
+                if (response.status === 401) { // Wygaśnięcie tokenu sesyjnego
+                    throw new Error("Unauthorized");
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.id) {
                     showUploadSuccess(fileName);
@@ -261,7 +284,12 @@
             })
             .catch(err => {
                 console.error(err);
-                alert(currentLang === "en" ? "Failed to save on Google Drive. Re-login might be needed." : "Błąd zapisu na Dysku Google. Spróbuj zalogować się ponownie.");
+                if (err.message === "Unauthorized") {
+                    alert(currentLang === "en" ? "Session expired. Re-authenticating..." : "Sesja wygasła. Odnawianie autoryzacji...");
+                    if (tokenClient) tokenClient.requestAccessToken({ prompt: '' });
+                } else {
+                    alert(currentLang === "en" ? "Failed to save on Google Drive." : "Błąd zapisu na Dysku Google.");
+                }
             });
         }
 
@@ -288,7 +316,6 @@
                 document.getElementById('procIcon').className = "text-xl animate-spin";
                 document.getElementById('procIcon').innerText = "⚙️";
 
-                // Wywołujemy prawdziwy upload zawartości pliku tekstowego na Dysk Google
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     uploadToGoogleDrive("Doc2Form_" + file.name + ".txt", e.target.result || "Pusta zawartość konwersji OmniSuite");
@@ -299,18 +326,17 @@
 
         function triggerBackup() {
             if (!userAccessToken) {
-                initiateRealLogin();
+                if (tokenClient) tokenClient.requestAccessToken({ prompt: 'consent' });
                 return;
             }
             const currentCode = document.getElementById('htmlEditor').value;
             const statusText = document.getElementById('backupStatus');
             statusText.innerText = currentLang === "en" ? "Uploading workspace backup..." : "Wysyłanie kopii zapasowej...";
             
-            // Zapisujemy aktualny stan edytora CodeSpace na prawdziwy Dysk Google
             uploadToGoogleDrive("CodeSpace_Backup.html", currentCode);
         }
 
-        function setLanguage(lang, email = "", name = "") {
+        function setLanguage(lang, email = "") {
             currentLang = lang;
             if(lang === "en") {
                 document.getElementById('navGenerator').innerText = "PDF Generator";
